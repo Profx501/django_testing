@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.urls import reverse
 
+from news.forms import CommentForm
+
 
 def test_home_page(client, news_10):
     urls = reverse('news:home')
@@ -19,10 +21,12 @@ def test_news_order(client, news_10):
     assert all_dates == sorted_dates
 
 
-def test_detail_page_contains_form(author_client, news):
+def test_detail_page_contains_form(author_client, news, form_data):
     url = reverse('news:detail', args=(news.id,))
-    response = author_client.get(url)
+    response = author_client.get(url, data=form_data)
+    form = response.context['form']
     assert 'form' in response.context
+    assert type(form) == CommentForm
 
 
 def test_detail_page_contains_form_for_user(client, news):
@@ -37,4 +41,6 @@ def test_comments_order(client, news, commets):
     assert 'news' in response.context
     news = response.context['news']
     all_comments = news.comment_set.all()
-    assert all_comments[0].created < all_comments[1].created
+    all_date_created = [comment.created for comment in all_comments]
+    sorted_date = sorted(all_date_created)
+    assert all_date_created == sorted_date
